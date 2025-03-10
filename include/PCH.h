@@ -1,3 +1,5 @@
+#pragma once
+
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 #include <spdlog/sinks/basic_file_sink.h>
@@ -7,8 +9,8 @@ using namespace std::literals;
 
 using FormID = RE::FormID;
 using RefID = RE::FormID;
-using Count = float;
+using Count = std::uint32_t;
 
-using Remnants = std::map<std::pair<FormID, std::uint8_t>, Count>;
+using Remnants = std::map<std::pair<FormID, std::pair<std::uint8_t,FormID>>, Count>;
 
-const RefID player_refid = 20;
+constexpr RefID player_refid = 20;

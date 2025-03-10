@@ -11,11 +11,11 @@ RE::BSEventNotifyControl ourEventSink::ProcessEvent(const RE::TESContainerChange
     if (remnants.empty()) return RE::BSEventNotifyControl::kContinue;
 
     for (const auto& [remnant_bench, count_] : remnants) {
-        const auto bench_no = remnant_bench.second;
+        const auto bench_no = remnant_bench.second.first;
         if (bench_no != bench) continue;
         const auto count = count_ * event->itemCount;
         const auto remnant = remnant_bench.first;
-        if (counts.contains(remnant)) counts[remnant] += count;
+        if (counts.contains(remnant)) counts.at(remnant) += count;
         else counts[remnant] = count;
 	}
 

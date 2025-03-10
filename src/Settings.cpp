@@ -1,6 +1,6 @@
 #include "Settings.h"
 
-Preset _parsePreset(const YAML::Node& config) { 
+Preset parsePreset_(const YAML::Node& config) { 
     Preset preset;
     if (!config["remnants"] || config["remnants"].size() == 0) {
         logger::error("Remnants are empty.");
@@ -15,32 +15,41 @@ Preset _parsePreset(const YAML::Node& config) {
             temp_formeditorid.empty() ? 0 : Utilities::FunctionsSkyrim::GetFormEditorIDFromString(temp_formeditorid);
         if (!temp_formid && !temp_formeditorid.empty()) {
             logger::error("Formid could not be obtained for {}", temp_formid, temp_formeditorid);
-            return Preset();
+            return {};
         }
         if (!remnantNode["count"] || remnantNode["count"].IsNull()) {
             logger::error("Count is null.");
-            return Preset();
+            return {};
         }
         if (!remnantNode["bench"] || remnantNode["bench"].IsNull()) {
             logger::error("Bench is null.");
-            return Preset();
+            return {};
         }
         
         logger::trace("Count");
         const Count temp_count = remnantNode["count"].as<Count>();
         if (temp_count == 0) {
 			logger::error("Count is 0.");
-			return Preset();
+			return {};
 		}
         
         logger::trace("Bench");
         const std::uint8_t temp_bench = remnantNode["bench"].as<std::uint8_t>();
         if (temp_bench == 0) {
         	logger::error("Bench is 0.");
-        	return Preset();
+        	return {};
         }
 
-        preset.items[std::make_pair(temp_formid, temp_bench)] = temp_count;
+        logger::trace("Bench Keyword");
+		FormID bench_keyword_id = 0;
+		if (remnantNode["bench_keyword"] && !remnantNode["bench_keyword"].IsNull()) {
+			const auto kywrd_id = Utilities::FunctionsSkyrim::GetFormEditorIDFromString(remnantNode["bench_keyword"].as<std::string>());
+			if (const auto kywrd = Utilities::FunctionsSkyrim::GetFormByID<RE::BGSKeyword>(kywrd_id)) {
+				bench_keyword_id = kywrd_id;
+			}
+		}
+
+        preset.items[std::make_pair(temp_formid, std::make_pair(temp_bench,bench_keyword_id))] = temp_count;
     }
     return preset;
 }
@@ -65,7 +74,7 @@ CustomPresets parsePresets() {
                 // we have list of owners at each node or a scalar owner
                 if (_Node["owners"].IsScalar()) {
                     const auto ownerName = _Node["owners"].as<std::string>();
-                    auto temp_settings = _parsePreset(_Node);
+                    auto temp_settings = parsePreset_(_Node);
                     if (temp_settings.CheckIntegrity()) {
                         _custom_settings[std::vector<std::string>{ownerName}] = temp_settings;
                     }
@@ -75,7 +84,7 @@ CustomPresets parsePresets() {
                     for (const auto& owner : _Node["owners"]) {
                         owners.push_back(owner.as<std::string>());
                     }
-                    auto temp_settings = _parsePreset(_Node);
+                    auto temp_settings = parsePreset_(_Node);
                     if (temp_settings.CheckIntegrity()) _custom_settings[owners] = temp_settings;
                 }
             }
@@ -84,7 +93,7 @@ CustomPresets parsePresets() {
     return _custom_settings;
 }
 
-const bool Preset::CheckIntegrity() { 
+bool Preset::CheckIntegrity() { 
     if (items.empty()) {
 		logger::error("Items are empty.");
         return InitFailed();

@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include "FormReader.h"
 
 RE::TESForm* Utilities::FunctionsSkyrim::GetFormByID(const RE::FormID id, const std::string& editor_id) {
     if (!editor_id.empty()) {
@@ -10,37 +11,34 @@ RE::TESForm* Utilities::FunctionsSkyrim::GetFormByID(const RE::FormID id, const 
     return nullptr;
 }
 
-FormID Utilities::FunctionsSkyrim::GetFormEditorIDFromString(const std::string& formEditorId) { 
-    logger::trace("Getting formid from editorid: {}", formEditorId);
-    if (Utilities::Functions::isValidHexWithLength7or8(formEditorId.c_str())) {
-        logger::trace("formEditorId is in hex format.");
+FormID Utilities::FunctionsSkyrim::GetFormEditorIDFromString(const std::string& formEditorId)
+{
+    static std::string delimiter = "~";
+	const auto plugin_and_localid = FormReader::split(formEditorId, delimiter);
+	if (plugin_and_localid.size() == 2) {
+		const auto& plugin_name = plugin_and_localid[1];
+		const auto local_id = FormReader::GetFormIDFromString(plugin_and_localid[0]);
+		const auto formid = FormReader::GetForm(plugin_name.c_str(), local_id);
+		if (const auto form = RE::TESForm::LookupByID(formid)) return form->GetFormID();
+	}
+
+    if (Functions::isValidHexWithLength7or8(formEditorId.c_str())) {
         int form_id_;
         std::stringstream ss;
         ss << std::hex << formEditorId;
         ss >> form_id_;
-        auto temp_form = GetFormByID(form_id_, "");
-        if (temp_form)
-            return temp_form->GetFormID();
-        else {
-            logger::error("Formid is null for editorid {}", formEditorId);
-            return 0;
-        }
-    }
-    if (formEditorId.empty())
+        if (const auto temp_form = GetFormByID(form_id_, "")) return temp_form->GetFormID();
+        logger::warn("Formid is null for editorid {}", formEditorId);
         return 0;
-    else if (!IsPo3Installed()) {
+    }
+    if (formEditorId.empty()) return 0;
+    if (!IsPo3Installed()) {
         logger::error("Po3 is not installed.");
         MsgBoxesNotifs::Windows::Po3ErrMsg();
         return 0;
     }
-    auto temp_form = GetFormByID(0, formEditorId);
-    if (temp_form) {
-        logger::trace("Formid is not null with formid {}", temp_form->GetFormID());
-        return temp_form->GetFormID();
-    } else {
-        logger::trace("Formid is null for editorid {}", formEditorId);
-        return 0;
-    }
+    if (const auto temp_form = GetFormByID(0, formEditorId)) return temp_form->GetFormID();
+    return 0;
 }
 
 bool Utilities::Functions::isValidHexWithLength7or8(const char* input) { 

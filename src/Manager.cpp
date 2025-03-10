@@ -1,17 +1,18 @@
 #include "Manager.h"
+#include <ranges>
 
-const Remnants Manager::_MakeSource(const FormID item, const Remnants& remnants) { 
+Remnants Manager::_MakeSource(const FormID item, const Remnants& remnants) { 
     if (sources.contains(item)){
         logger::error("Manager::_MakeSource: item already exists in sources");
     } else sources[item] = remnants;
     return sources.at(item);
 }
 
-const bool Manager::IsBenchSupported(const std::uint8_t bench) const { 
+bool Manager::IsBenchSupported(const std::uint8_t bench) const { 
 	return benches.contains(bench); 
 }
 
-const Remnants Manager::GetRemnants(const FormID used_item_formid) {
+Remnants Manager::GetRemnants(const FormID used_item_formid) {
     Remnants remnants = {};
 	const auto used_item = Utilities::FunctionsSkyrim::GetFormByID<RE::TESBoundObject>(used_item_formid);
     if (!used_item) return remnants;
@@ -37,11 +38,10 @@ const Remnants Manager::GetRemnants(const FormID used_item_formid) {
 
 void Manager::Init() {
 	presets = parsePresets();
-    for (const auto& [ownerlist,preset] : presets) {
-		for (const auto& [formid_bench, count_bench] : preset.items) {
+    for (const auto& preset : presets | std::views::values) {
+		for (const auto& formid_bench : preset.items | std::views::keys) {
             benches.insert(formid_bench.second);
 		}
 	}
 };
 
-void Manager::UnInstall() {}

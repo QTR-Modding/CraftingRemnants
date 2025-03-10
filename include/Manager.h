@@ -6,7 +6,7 @@ class Manager {
     std::map<FormID, Remnants> sources;
     std::set<std::uint8_t> benches;
 
-    const Remnants _MakeSource(const FormID item, const Remnants& remnants);
+    Remnants _MakeSource(const FormID item, const Remnants& remnants);
 
 public:
     Manager() { Init(); };
@@ -16,12 +16,9 @@ public:
         return &singleton;
     }
 
-    const bool IsBenchSupported(const std::uint8_t bench) const;
+    [[nodiscard]] bool IsBenchSupported(const std::uint8_t bench) const;
 
-    const Remnants GetRemnants(const FormID item);
+    Remnants GetRemnants(FormID used_item_formid);
 
     void Init();
-
-    void UnInstall();
-
 };

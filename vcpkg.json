@@ -1,19 +1,17 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "name": "craftingremnants",
-  "version-string": "0.1.1.0",
+  "name": "crafting-remnants",
+  "version-string": "0.1.2.0",
   "dependencies": [
-    "rapidjson",
     "fast-cpp-csv-parser",
     "rsm-binary-io",
-    "simpleini",
     "spdlog",
     "xbyak",
     "rapidcsv",
-    "directxmath",
-    "directxtk",
-    "boost-stl-interfaces",
-    "clib-util"
+    "clib-util",
+    "clib-utils-qtr",
+    "skyprompt-api",
+    "directxtk"
   ],
   "overrides": [
     {

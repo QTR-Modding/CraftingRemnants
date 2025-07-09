@@ -6,5 +6,4 @@ set(headers ${headers}
 	include/Events.h
 	include/Hooks.h
 	include/Logger.h
-	include/FormReader.h
 )

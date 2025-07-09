@@ -44,7 +44,7 @@ Preset parsePreset_(const YAML::Node& config) {
 		FormID bench_keyword_id = 0;
 		if (remnantNode["bench_keyword"] && !remnantNode["bench_keyword"].IsNull()) {
 			const auto kywrd_id = Utilities::FunctionsSkyrim::GetFormEditorIDFromString(remnantNode["bench_keyword"].as<std::string>());
-			if (const auto kywrd = Utilities::FunctionsSkyrim::GetFormByID<RE::BGSKeyword>(kywrd_id)) {
+			if ([[maybe_unused]] const auto kywrd = Utilities::FunctionsSkyrim::GetFormByID<RE::BGSKeyword>(kywrd_id)) {
 				bench_keyword_id = kywrd_id;
 			}
 		}
@@ -103,7 +103,7 @@ bool Preset::CheckIntegrity() {
 			logger::error("Count is 0.");
             return InitFailed();
 		}
-        if (formid_bench.second == 0) {
+        if (formid_bench.second.first == 0) {
 			logger::error("Bench is 0.");
             return InitFailed();
 		}

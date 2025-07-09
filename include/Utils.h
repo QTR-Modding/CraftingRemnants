@@ -1,20 +1,9 @@
 #pragma once
 
-// #include <chrono>
-#include <windows.h>
 #include <yaml-cpp/yaml.h>
-#include <ClibUtil/editorID.hpp>
-#include <algorithm>
-#include <codecvt>
 #include <filesystem>
-#include <fstream>
-#include <functional>
 #include <iostream>
-#include <mutex>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include "SimpleIni.h"
 
 namespace Utilities {
 

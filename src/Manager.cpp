@@ -1,7 +1,7 @@
 #include "Manager.h"
 #include <ranges>
 
-Remnants Manager::_MakeSource(const FormID item, const Remnants& remnants) { 
+Remnants Manager::MakeSource(const FormID item, const Remnants& remnants) { 
     if (sources.contains(item)){
         logger::error("Manager::_MakeSource: item already exists in sources");
     } else sources[item] = remnants;
@@ -26,11 +26,11 @@ Remnants Manager::GetRemnants(const FormID used_item_formid) {
             const FormID temp_cstm_formid = Utilities::FunctionsSkyrim::GetFormEditorIDFromString(name);
             if (temp_cstm_formid <= 0) continue;
             if (const auto temp_cstm_form = Utilities::FunctionsSkyrim::GetFormByID(temp_cstm_formid, name)) {
-                if (temp_cstm_form->GetFormID() == used_item_formid) return _MakeSource(used_item_formid, sttng.items);
+                if (temp_cstm_form->GetFormID() == used_item_formid) return MakeSource(used_item_formid, sttng.items);
             }
         }
         if (Utilities::Functions::String::includesWord(used_item->GetName(), names)) {
-            return _MakeSource(used_item_formid, sttng.items);
+            return MakeSource(used_item_formid, sttng.items);
         }
     }
     return remnants;
@@ -40,7 +40,7 @@ void Manager::Init() {
 	presets = parsePresets();
     for (const auto& preset : presets | std::views::values) {
 		for (const auto& formid_bench : preset.items | std::views::keys) {
-            benches.insert(formid_bench.second);
+            benches.insert(formid_bench.second.first);
 		}
 	}
 };

@@ -1,5 +1,5 @@
 #include "Utils.h"
-#include "FormReader.h"
+#include "CLibUtilsQTR/FormReader.hpp"
 
 RE::TESForm* Utilities::FunctionsSkyrim::GetFormByID(const RE::FormID id, const std::string& editor_id) {
     if (!editor_id.empty()) {

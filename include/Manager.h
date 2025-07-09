@@ -1,3 +1,4 @@
+#pragma once
 #include "Settings.h"
 
 class Manager {
@@ -6,7 +7,7 @@ class Manager {
     std::map<FormID, Remnants> sources;
     std::set<std::uint8_t> benches;
 
-    Remnants _MakeSource(const FormID item, const Remnants& remnants);
+    Remnants MakeSource(const FormID item, const Remnants& remnants);
 
 public:
     Manager() { Init(); };

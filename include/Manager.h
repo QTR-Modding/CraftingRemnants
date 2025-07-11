@@ -1,25 +1,21 @@
 #pragma once
 #include "Settings.h"
+#include "ClibUtil/singleton.hpp"
 
-class Manager {
-
-    CustomPresets presets;
-    std::map<FormID, Remnants> sources;
-    std::set<std::uint8_t> benches;
-
-    Remnants MakeSource(const FormID item, const Remnants& remnants);
-
+class Manager : public clib_util::singleton::ISingleton<Manager>{
 public:
-    Manager() { Init(); };
+    static Remnants GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurniture* a_bench);
+    static void ProcessRemnants(const Remnants& remnants);
 
-    static Manager* GetSingleton() {
-        static Manager singleton;
-        return &singleton;
+#ifndef NDEBUG
+    static void Print() {
+        std::shared_lock lock(PresetSettings::presets_mutex_);
+	    logger::info("Current Remnants Presets:");
+	    for (const auto& [owner, remnant_conditions] : PresetSettings::presets) {
+		    logger::info("Owner: Catalyst: {:x}, settings type {},Bench ID: {}", owner.catalyst.first,
+                         owner.catalyst.second, owner.bench_id);
+		    remnant_conditions.Print();
+	    }
     }
-
-    [[nodiscard]] bool IsBenchSupported(const std::uint8_t bench) const;
-
-    Remnants GetRemnants(FormID used_item_formid);
-
-    void Init();
+#endif
 };

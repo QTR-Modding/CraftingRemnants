@@ -11,6 +11,4 @@ using FormID = RE::FormID;
 using RefID = RE::FormID;
 using Count = std::uint32_t;
 
-using Remnants = std::map<std::pair<FormID, std::pair<std::uint8_t,FormID>>, Count>;
-
 constexpr RefID player_refid = 20;

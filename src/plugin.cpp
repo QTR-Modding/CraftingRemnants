@@ -4,10 +4,15 @@
 void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
         // Start
-        auto* eventSink = ourEventSink::GetSingleton();
+
+        PresetSettings::LoadSettings();
+
+        auto* eventSink = EventSink::GetSingleton();
         auto* eventSourceHolder = RE::ScriptEventSourceHolder::GetSingleton();
         eventSourceHolder->AddEventSink<RE::TESContainerChangedEvent>(eventSink);
         eventSourceHolder->AddEventSink<RE::TESFurnitureEvent>(eventSink);
+        auto itemcraftedsource = RE::ItemCrafted::GetEventSource();
+        itemcraftedsource->AddEventSink(eventSink);
     }
     if (message->type == SKSE::MessagingInterface::kNewGame || message->type == SKSE::MessagingInterface::kPostLoadGame) {
         // Post-load

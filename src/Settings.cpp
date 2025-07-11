@@ -1,19 +1,6 @@
 #include "Settings.h"
 #include "Utils.h"
-#include "CLibUtilsQTR/FormReader.hpp"
-
-std::vector<FormID> PresetSettings::StringToFormIDs(const std::string& input)
-{
-    if (std::shared_lock lock(formGroups_mutex_); formGroups.contains(input)) {
-        return std::vector<FormID>(formGroups.at(input).begin(), formGroups.at(input).end());
-    }
-
-    if (FormID a_formid = FormReader::GetFormEditorIDFromString(input); a_formid > 0) {
-        return { a_formid };
-	}
-
-    return {};
-}
+#include "CLibUtilsQTR/PresetHelpers.hpp"
 
 bool PresetSettings::OwnerNodeHealthy(const YAML::Node& ownerNode)
 {
@@ -50,36 +37,8 @@ bool PresetSettings::NodeExists(const YAML::Node& node, const std::string& key)
 
 void PresetSettings::LoadFormGroups()
 {
-    formGroups.clear();
 	const auto folder_path = std::format("Data/SKSE/Plugins/{}", Utilities::mod_name) + "/formGroups";
-    if (!std::filesystem::exists(folder_path)) {
-        logger::error("FormGroups folder does not exist: {}", folder_path);
-		return;
-    }
-
-    for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
-        if (!entry.is_regular_file() || entry.path().extension() != ".txt") continue;
-        const auto filename = entry.path().string();
-
-		std::ifstream file(filename);
-        if (!file.is_open()) {
-            logger::error("Could not open file: {}", filename);
-            continue;
-		}
-
-		const auto file_name_without_extension = entry.path().stem().string();
-
-        std::string line;
-        while (std::getline(file, line)) {
-            // trim whitespace from the line
-            line = Utilities::Functions::String::trim(line);
-            if (line.empty()) continue; // skip empty lines
-			if (auto a_form = FormReader::GetFormEditorIDFromString(line); a_form>0) {
-				std::unique_lock lock(formGroups_mutex_);
-				formGroups[file_name_without_extension].insert(a_form);
-			}
-		}
-	}
+    PresetHelpers::TXT_Helpers::GatherForms(folder_path);
 }
 
 void PresetSettings::LoadPresets()
@@ -106,6 +65,7 @@ void PresetSettings::LoadPresets()
                 continue;
 			}
 
+			using namespace PresetHelpers::YAML_Helpers;
             for (const auto& owner_id : CollectFrom<FormID,std::string>(ownerNode,"owners")) {
 				for (const auto& bench_id : CollectFrom<uint8_t>(ownerNode, "benches")) {
 

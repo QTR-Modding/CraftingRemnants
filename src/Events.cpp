@@ -46,6 +46,10 @@ RE::BSEventNotifyControl EventSink::ProcessEvent(const RE::TESFurnitureEvent* ev
     const auto bench_no = static_cast<std::uint8_t>(temp_bench->workBenchData.benchType.get());
     
     OnBenchEnter(temp_bench,bench_no);
+
+#ifndef NDEBUG
+    Manager::Print();
+#endif
     
     return RE::BSEventNotifyControl::kContinue;
 }

@@ -4,6 +4,5 @@ set(headers ${headers}
 	include/Settings.h
 	include/Manager.h
 	include/Events.h
-	include/Hooks.h
 	include/Logger.h
 )

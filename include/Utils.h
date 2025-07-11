@@ -19,40 +19,4 @@ namespace Utilities {
             int Po3ErrMsg();
         }
     };
-
-
-    namespace Functions {
-
-        namespace String {
-
-            template <typename T>
-            std::string join(const T& container, const std::string_view& delimiter) {
-                std::ostringstream oss;
-                auto iter = container.begin();
-
-                if (iter != container.end()) {
-                    oss << *iter;
-                    ++iter;
-                }
-
-                for (; iter != container.end(); ++iter) {
-                    oss << delimiter << *iter;
-                }
-
-                return oss.str();
-            }
-
-            std::string trim(const std::string& str);
-
-            std::string toLowercase(const std::string& str);
-
-            std::string replaceLineBreaksWithSpace(const std::string& input);
-
-            bool includesString(const std::string& input, const std::vector<std::string>& strings);
-
-            bool includesWord(const std::string& input, const std::vector<std::string>& strings);
-        };
-
-	}
-
 };

@@ -1,7 +1,7 @@
 #pragma once
 #include <shared_mutex>
 #include <unordered_set>
-#include "Utils.h"
+#include <yaml-cpp/yaml.h>
 
 enum RemnantSettingsType : uint8_t {
     kNone = 0,

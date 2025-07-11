@@ -1,54 +1,6 @@
 #include "Utils.h"
 #include "CLibUtilsQTR/FormReader.hpp"
 
-RE::TESForm* Utilities::FunctionsSkyrim::GetFormByID(const RE::FormID id, const std::string& editor_id) {
-    if (!editor_id.empty()) {
-        if (auto* form = RE::TESForm::LookupByEditorID(editor_id)) return form;
-    }
-    if (const auto form = RE::TESForm::LookupByID(id)) return form;
-    return nullptr;
-}
-
-FormID Utilities::FunctionsSkyrim::GetFormEditorIDFromString(const std::string& formEditorId)
-{
-    static std::string delimiter = "~";
-	const auto plugin_and_localid = FormReader::split(formEditorId, delimiter);
-	if (plugin_and_localid.size() == 2) {
-		const auto& plugin_name = plugin_and_localid[1];
-		const auto local_id = FormReader::GetFormIDFromString(plugin_and_localid[0]);
-		const auto formid = FormReader::GetForm(plugin_name.c_str(), local_id);
-		if (const auto form = RE::TESForm::LookupByID(formid)) return form->GetFormID();
-	}
-
-    if (Functions::isValidHexWithLength7or8(formEditorId.c_str())) {
-		auto form_id_ = FormReader::GetFormIDFromString(formEditorId);
-        if (const auto temp_form = GetFormByID(form_id_, "")) return temp_form->GetFormID();
-        logger::warn("Formid is null for editorid {}", formEditorId);
-        return 0;
-    }
-    if (formEditorId.empty()) return 0;
-    if (!IsPo3Installed()) {
-        logger::error("Po3 is not installed.");
-        MsgBoxesNotifs::Windows::Po3ErrMsg();
-        return 0;
-    }
-    if (const auto temp_form = GetFormByID(0, formEditorId)) return temp_form->GetFormID();
-    return 0;
-}
-
-bool Utilities::Functions::isValidHexWithLength7or8(const char* input) { 
-    std::string inputStr(input);
-
-    if (inputStr.substr(0, 2) == "0x") {
-        // Remove "0x" from the beginning of the string
-        inputStr = inputStr.substr(2);
-    }
-
-    const std::regex hexRegex("^[0-9A-Fa-f]{7,8}$");  // Allow 7 to 8 characters
-    const bool isValid = std::regex_match(inputStr, hexRegex);
-    return isValid;
-}
-
 int Utilities::MsgBoxesNotifs::Windows::Po3ErrMsg() {
     MessageBoxA(nullptr, po3_err_msgbox.c_str(), "Error", MB_OK | MB_ICONERROR);
     return 1;

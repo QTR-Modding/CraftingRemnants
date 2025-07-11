@@ -1,4 +1,6 @@
 #include "Settings.h"
+#include "Utils.h"
+#include "CLibUtilsQTR/FormReader.hpp"
 
 std::vector<FormID> PresetSettings::StringToFormIDs(const std::string& input)
 {
@@ -6,7 +8,7 @@ std::vector<FormID> PresetSettings::StringToFormIDs(const std::string& input)
         return std::vector<FormID>(formGroups.at(input).begin(), formGroups.at(input).end());
     }
 
-    if (FormID a_formid = Utilities::FunctionsSkyrim::GetFormEditorIDFromString(input); a_formid > 0) {
+    if (FormID a_formid = FormReader::GetFormEditorIDFromString(input); a_formid > 0) {
         return { a_formid };
 	}
 
@@ -72,7 +74,7 @@ void PresetSettings::LoadFormGroups()
             // trim whitespace from the line
             line = Utilities::Functions::String::trim(line);
             if (line.empty()) continue; // skip empty lines
-			if (auto a_form = Utilities::FunctionsSkyrim::GetFormEditorIDFromString(line); a_form>0) {
+			if (auto a_form = FormReader::GetFormEditorIDFromString(line); a_form>0) {
 				std::unique_lock lock(formGroups_mutex_);
 				formGroups[file_name_without_extension].insert(a_form);
 			}
@@ -104,8 +106,6 @@ void PresetSettings::LoadPresets()
                 continue;
 			}
 
-			using namespace Utilities::FunctionsSkyrim;
-
             for (const auto& owner_id : CollectFrom<FormID,std::string>(ownerNode,"owners")) {
 				for (const auto& bench_id : CollectFrom<uint8_t>(ownerNode, "benches")) {
 
@@ -116,7 +116,7 @@ void PresetSettings::LoadPresets()
                     // KWs
 				    std::vector<RE::BGSKeyword*> bench_keywords;
 					for (const auto& bench_keyword : CollectFrom<FormID,std::string>(ownerNode,"bench_keywords")) {
-						if (auto a_kw = Utilities::FunctionsSkyrim::GetFormByID<RE::BGSKeyword>(bench_keyword)) {
+						if (auto a_kw = FormReader::GetFormByID<RE::BGSKeyword>(bench_keyword)) {
 						    bench_keywords.push_back(a_kw);
 						}
                     }
@@ -124,7 +124,7 @@ void PresetSettings::LoadPresets()
 				    Remnants remnants;
                     for (auto a_remnants_node : ownerNode["remnants"]) {
 				        for (const auto a_formid : CollectFrom<FormID, std::string>(a_remnants_node, "FormEditorID")) {
-                            remnants[GetFormByID<RE::TESBoundObject>(a_formid)] = a_remnants_node["count"].as<Count>();
+                            remnants[FormReader::GetFormByID<RE::TESBoundObject>(a_formid)] = a_remnants_node["count"].as<Count>();
                         }
                     }
 

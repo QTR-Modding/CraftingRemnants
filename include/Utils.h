@@ -1,6 +1,4 @@
 #pragma once
-
-#include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <string>
 
@@ -24,8 +22,6 @@ namespace Utilities {
 
 
     namespace Functions {
-
-		[[nodiscard]] bool isValidHexWithLength7or8(const char* input);
 
         namespace String {
 
@@ -59,21 +55,4 @@ namespace Utilities {
 
 	}
 
-    namespace FunctionsSkyrim {
-
-        RE::TESForm* GetFormByID(const RE::FormID id, const std::string& editor_id = "");
-
-        template <class T = RE::TESForm>
-        static T* GetFormByID(const RE::FormID id, const std::string& editor_id = "") {
-            if (!editor_id.empty()) {
-                auto* form = RE::TESForm::LookupByEditorID<T>(editor_id);
-                if (form) return form;
-            }
-            T* form = RE::TESForm::LookupByID<T>(id);
-            if (form) return form;
-            return nullptr;
-        };
-
-        [[nodiscard]] FormID GetFormEditorIDFromString(const std::string& formEditorId);
-    }
 };

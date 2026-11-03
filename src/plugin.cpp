@@ -23,7 +23,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     clib_utilsQTR::SetupLog();
     logger::info("Plugin loaded");
-    SKSE::Init(skse);
+    SKSE::Init(skse, false);
     SKSE::GetMessagingInterface()->RegisterListener(OnMessage);
     return true;
 }

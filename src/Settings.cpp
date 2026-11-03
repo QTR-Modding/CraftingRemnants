@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include "Utils.h"
-#include "CLibUtilsQTR/PresetHelpers.hpp"
+#include "CLibUtilsQTR/PresetHelpers/PresetHelpersTXT.hpp"
+#include "CLibUtilsQTR/PresetHelpers/PresetHelpersYAML.hpp"
 
 bool PresetSettings::OwnerNodeHealthy(const YAML::Node& ownerNode)
 {

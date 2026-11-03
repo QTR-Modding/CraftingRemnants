@@ -10,7 +10,7 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
         auto* eventSink = EventSink::GetSingleton();
         auto* eventSourceHolder = RE::ScriptEventSourceHolder::GetSingleton();
         eventSourceHolder->AddEventSink<RE::TESContainerChangedEvent>(eventSink);
-        eventSourceHolder->AddEventSink<RE::TESFurnitureEvent>(eventSink);
+        RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(eventSink);
         auto itemcraftedsource = RE::ItemCrafted::GetEventSource();
         itemcraftedsource->AddEventSink(eventSink);
     }

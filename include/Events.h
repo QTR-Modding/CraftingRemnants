@@ -16,6 +16,7 @@ class EventSink final :public RE::BSTEventSink<RE::TESContainerChangedEvent>,
     RE::BSEventNotifyControl ProcessEvent(const RE::ItemCrafted::Event* a_event,
                                              RE::BSTEventSource<RE::ItemCrafted::Event>*) override;
 
+    std::pair<RE::TESFurniture*,std::uint8_t> GetBench() const;
     void OnBenchEnter(RE::TESFurniture* a_bench, std::uint8_t bench_no);
     void OnBenchExit();
 

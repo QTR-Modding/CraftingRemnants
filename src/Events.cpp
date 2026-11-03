@@ -4,15 +4,17 @@ RE::BSEventNotifyControl EventSink::ProcessEvent(const RE::TESContainerChangedEv
                                                     RE::BSTEventSource<RE::TESContainerChangedEvent>*) {
     
     if (!event) return RE::BSEventNotifyControl::kContinue;
-    if (bench.second == 0) return RE::BSEventNotifyControl::kContinue;
     if (event->oldContainer!=player_refid) return RE::BSEventNotifyControl::kContinue;
+
+    const auto [bench_form, bench_type] = GetBench();
+    if (bench_type == 0) return RE::BSEventNotifyControl::kContinue;
 
 	constexpr RemnantSettingsType remnant_type = RemnantSettingsType::kOnRemoved;
 
     const RemnantCatalyst a_catalyst(event->baseObj,remnant_type);
-	const RemnantsOwner remnants_owner(a_catalyst,bench.second);
+	const RemnantsOwner remnants_owner(a_catalyst,bench_type);
 
-    const auto remnants = Manager::GetRemnants(remnants_owner,bench.first);
+    const auto remnants = Manager::GetRemnants(remnants_owner,bench_form);
     Manager::ProcessRemnants(remnants);
 
     return RE::BSEventNotifyControl::kContinue;
@@ -62,12 +64,26 @@ RE::BSEventNotifyControl EventSink::ProcessEvent(const RE::ItemCrafted::Event* a
 
 	constexpr RemnantSettingsType remnant_type = RemnantSettingsType::kOnCrafted;
 
+    const auto [bench_form, bench_type] = GetBench();
     const RemnantCatalyst a_catalyst(a_event->item->GetFormID(),remnant_type);
-	const RemnantsOwner remnants_owner(a_catalyst,bench.second);
+	const RemnantsOwner remnants_owner(a_catalyst,bench_type);
 
-    const auto remnants = Manager::GetRemnants(remnants_owner,bench.first);
+    const auto remnants = Manager::GetRemnants(remnants_owner,bench_form);
     Manager::ProcessRemnants(remnants);
     return RE::BSEventNotifyControl::kContinue;
+}
+
+std::pair<RE::TESFurniture*,std::uint8_t> EventSink::GetBench() const {
+    if (bench.second != 0) return bench;
+
+    const auto furniture_ref = RE::PlayerCharacter::GetSingleton()->GetOccupiedFurniture().get();
+    if (!furniture_ref) return bench;
+    const auto furn_base = furniture_ref->GetBaseObject();
+    if (!furn_base) return bench;
+    const auto furniture = furn_base->As<RE::TESFurniture>();
+    if (!furniture) return bench;
+
+    return {furniture, static_cast<std::uint8_t>(furniture->workBenchData.benchType.get())};
 }
 
 void EventSink::OnBenchEnter(RE::TESFurniture* a_bench, const std::uint8_t bench_no) {

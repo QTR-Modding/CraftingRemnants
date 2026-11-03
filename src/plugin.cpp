@@ -1,5 +1,5 @@
 #include "Events.h"
-#include "Logger.h"
+#include "CLibUtilsQTR/Logging.hpp"
 
 void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
@@ -21,7 +21,7 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
 
 SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
-    SetupLog();
+    clib_utilsQTR::SetupLog();
     logger::info("Plugin loaded");
     SKSE::Init(skse);
     SKSE::GetMessagingInterface()->RegisterListener(OnMessage);

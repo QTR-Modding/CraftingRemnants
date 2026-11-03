@@ -3,7 +3,7 @@
 
 class Manager {
 public:
-    static void ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench);
+    static void ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench, Count a_quantity = 1);
 
 #ifndef NDEBUG
     static void Print() {

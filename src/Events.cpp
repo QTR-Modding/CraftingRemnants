@@ -7,7 +7,7 @@ RE::BSEventNotifyControl EventSink::ProcessEvent(const RE::TESContainerChangedEv
     if (!event) return RE::BSEventNotifyControl::kContinue;
     if (event->oldContainer!=player_refid) return RE::BSEventNotifyControl::kContinue;
 
-    Manager::ProcessRemnants({event->baseObj, RemnantSettingsType::kOnRemoved}, bench);
+    Manager::ProcessRemnants({event->baseObj, RemnantSettingsType::kOnRemoved}, bench, event->itemCount);
 
     return RE::BSEventNotifyControl::kContinue;
 }

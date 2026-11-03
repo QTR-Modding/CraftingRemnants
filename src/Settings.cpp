@@ -87,7 +87,9 @@ void PresetSettings::LoadPresets()
 				    Remnants remnants;
                     for (auto a_remnants_node : ownerNode["remnants"]) {
 				        for (const auto a_formid : CollectFrom<FormID, std::string>(a_remnants_node, "FormEditorID")) {
-                            remnants[FormReader::GetFormByID<RE::TESBoundObject>(a_formid)] = a_remnants_node["count"].as<Count>();
+                            if (auto* remnant = FormReader::GetFormByID<RE::TESBoundObject>(a_formid)) {
+                                remnants[remnant] = a_remnants_node["count"].as<Count>();
+                            }
                         }
                     }
 

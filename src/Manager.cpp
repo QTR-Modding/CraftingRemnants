@@ -9,7 +9,7 @@ Remnants Manager::GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurnitu
 	return Remnants{};
 }
 
-void Manager::ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench)
+void Manager::ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench, Count a_quantity)
 {
     if (!a_bench) return;
     const auto bench_type = a_bench->workBenchData.benchType.get();
@@ -20,7 +20,7 @@ void Manager::ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFu
     }
     const auto player = RE::PlayerCharacter::GetSingleton();
 	for (const auto& [remnant, count] : remnants) {
-        if (count == 0) continue;
-        player->AddObjectToContainer(remnant, nullptr, count, nullptr);
+        if (count == 0 || a_quantity == 0) continue;
+        player->AddObjectToContainer(remnant, nullptr, count * a_quantity, nullptr);
 	}
 }

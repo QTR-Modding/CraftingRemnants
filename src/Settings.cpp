@@ -5,7 +5,7 @@
 
 bool PresetSettings::OwnerNodeHealthy(const YAML::Node& ownerNode)
 {
-    static const std::array<std::string, 5> keys_o = { "owners","benches", "bench_keywords", "type", "remnants" };
+    static const std::array<std::string, 4> keys_o = { "owners","benches", "type", "remnants" };
 
     if (!std::ranges::all_of(keys_o, [&](const std::string& key) { return NodeExists(ownerNode, key); })) {
         logger::error("Not all required keys are present in owner node");
@@ -76,11 +76,13 @@ void PresetSettings::LoadPresets()
 
                     // KWs
 				    std::vector<RE::BGSKeyword*> bench_keywords;
-					for (const auto& bench_keyword : CollectFrom<FormID,std::string>(ownerNode,"bench_keywords")) {
-						if (auto a_kw = FormReader::GetFormByID<RE::BGSKeyword>(bench_keyword)) {
-						    bench_keywords.push_back(a_kw);
+					if (NodeExists(ownerNode, "bench_keywords")) {
+						for (const auto& bench_keyword : CollectFrom<FormID,std::string>(ownerNode,"bench_keywords")) {
+							if (auto a_kw = FormReader::GetFormByID<RE::BGSKeyword>(bench_keyword)) {
+							    bench_keywords.push_back(a_kw);
+							}
 						}
-                    }
+					}
 					// Remnants
 				    Remnants remnants;
                     for (auto a_remnants_node : ownerNode["remnants"]) {

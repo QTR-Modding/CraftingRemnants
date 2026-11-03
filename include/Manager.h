@@ -1,11 +1,9 @@
 #pragma once
 #include "Settings.h"
-#include "ClibUtil/singleton.hpp"
 
-class Manager : public clib_util::singleton::ISingleton<Manager>{
+class Manager {
 public:
-    static Remnants GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurniture* a_bench);
-    static void ProcessRemnants(const Remnants& remnants);
+    static void ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench);
 
 #ifndef NDEBUG
     static void Print() {
@@ -18,4 +16,6 @@ public:
 	    }
     }
 #endif
+private:
+    static Remnants GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurniture* a_bench);
 };

@@ -3,14 +3,18 @@
 Remnants Manager::GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurniture* a_bench)
 {
 	std::shared_lock lock(PresetSettings::presets_mutex_);
-	if (PresetSettings::presets.contains(a_owner)) {
-		return PresetSettings::presets.at(a_owner).Get(a_bench);
+	if (const auto preset = PresetSettings::presets.find(a_owner); preset != PresetSettings::presets.end()) {
+		return preset->second.Get(a_bench);
 	}
 	return Remnants{};
 }
 
-void Manager::ProcessRemnants(const Remnants& remnants)
+void Manager::ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench)
 {
+    if (!a_bench) return;
+    const auto bench_type = a_bench->workBenchData.benchType.get();
+    if (bench_type == RE::TESFurniture::WorkBenchData::BenchType::kNone) return;
+    const auto remnants = GetRemnants({a_catalyst, static_cast<std::uint8_t>(bench_type)}, a_bench);
     if (remnants.empty()) {
         return;
     }

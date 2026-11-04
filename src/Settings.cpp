@@ -1,108 +1,130 @@
 #include "Settings.h"
+#include "Utils.h"
+#include "CLibUtilsQTR/PresetHelpers/PresetHelpersTXT.hpp"
+#include "CLibUtilsQTR/PresetHelpers/PresetHelpersYAML.hpp"
 
-Preset _parsePreset(const YAML::Node& config) { 
-    Preset preset;
-    if (!config["remnants"] || config["remnants"].size() == 0) {
-        logger::error("Remnants are empty.");
-        return preset;
-    }
-    for (const auto& remnantNode : config["remnants"]) {
-        const auto temp_formeditorid = remnantNode["FormEditorID"] && !remnantNode["FormEditorID"].IsNull()
-                                           ? remnantNode["FormEditorID"].as<std::string>()
-                                           : "";
-        
-        const FormID temp_formid =
-            temp_formeditorid.empty() ? 0 : Utilities::FunctionsSkyrim::GetFormEditorIDFromString(temp_formeditorid);
-        if (!temp_formid && !temp_formeditorid.empty()) {
-            logger::error("Formid could not be obtained for {}", temp_formid, temp_formeditorid);
-            return Preset();
-        }
-        if (!remnantNode["count"] || remnantNode["count"].IsNull()) {
-            logger::error("Count is null.");
-            return Preset();
-        }
-        if (!remnantNode["bench"] || remnantNode["bench"].IsNull()) {
-            logger::error("Bench is null.");
-            return Preset();
-        }
-        
-        logger::trace("Count");
-        const Count temp_count = remnantNode["count"].as<Count>();
-        if (temp_count == 0) {
-			logger::error("Count is 0.");
-			return Preset();
-		}
-        
-        logger::trace("Bench");
-        const std::uint8_t temp_bench = remnantNode["bench"].as<std::uint8_t>();
-        if (temp_bench == 0) {
-        	logger::error("Bench is 0.");
-        	return Preset();
-        }
+bool PresetSettings::OwnerNodeHealthy(const YAML::Node& ownerNode)
+{
+    static const std::array<std::string, 4> keys_o = { "owners","benches", "type", "remnants" };
 
-        preset.items[std::make_pair(temp_formid, temp_bench)] = temp_count;
+    if (!std::ranges::all_of(keys_o, [&](const std::string& key) { return NodeExists(ownerNode, key); })) {
+        logger::error("Not all required keys are present in owner node");
+		return false;
     }
-    return preset;
+    if (const auto type = static_cast<RemnantSettingsType>(ownerNode["type"].as<uint8_t>()); type == RemnantSettingsType::kNone || type >= RemnantSettingsType::kTotal) {
+		logger::error("Invalid type for owner node");
+        return false;
+	}
+
+	auto& remnants_node = ownerNode["remnants"];
+    static const std::array<std::string, 2> keys_r = { "FormEditorID","count"};
+    for (auto& a_node : remnants_node) {
+        if (!std::ranges::all_of(keys_r, [&](const std::string& key) { return NodeExists(a_node, key); })) {
+            logger::error("Not all required keys are present in remnants node");
+		    return false;
+        }
+        if (const Count count = a_node["count"].as<Count>(); count <= 0) {
+		    logger::error("Count is not valid in remnants node");
+			return false;
+        }
+	}
+    return true;
 }
 
-CustomPresets parsePresets() {
-    CustomPresets _custom_settings;
+bool PresetSettings::NodeExists(const YAML::Node& node, const std::string& key)
+{
+	return node[key] && !node[key].IsNull() && node[key].IsDefined();
+}
+
+void PresetSettings::LoadFormGroups()
+{
+	const auto folder_path = std::format("Data/SKSE/Plugins/{}", Utilities::mod_name) + "/formGroups";
+    PresetHelpers::TXT_Helpers::GatherForms(folder_path);
+}
+
+void PresetSettings::LoadPresets()
+{
     const auto folder_path = std::format("Data/SKSE/Plugins/{}", Utilities::mod_name) + "/presets";
-    std::filesystem::create_directories(folder_path);
-    logger::trace("Custom path: {}", folder_path);
+    if (!std::filesystem::exists(folder_path)) {
+        logger::error("Presets folder does not exist: {}", folder_path);
+        return;
+	}
 
     for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".yml") {
-            const auto filename = entry.path().string();
-            YAML::Node config = YAML::LoadFile(filename);
+		if (!entry.is_regular_file() || entry.path().extension() != ".yml") continue;
 
-            if (!config["ownerLists"]) {
-                logger::trace("OwnerLists not found in {}", filename);
+        const auto filename = entry.path().string();
+        YAML::Node config = YAML::LoadFile(filename);
+        if (!config["ownerLists"]) {
+            logger::trace("OwnerLists not found in {}", filename);
+            continue;
+		}
+
+        for (const auto& ownerNode : config["ownerLists"]) {
+            if (!OwnerNodeHealthy(ownerNode)) {
+                logger::error("Owner node is not healthy in file: {}", filename);
                 continue;
-            }
+			}
 
-            for (const auto& _Node : config["ownerLists"]) {
-                // we have list of owners at each node or a scalar owner
-                if (_Node["owners"].IsScalar()) {
-                    const auto ownerName = _Node["owners"].as<std::string>();
-                    auto temp_settings = _parsePreset(_Node);
-                    if (temp_settings.CheckIntegrity()) {
-                        _custom_settings[std::vector<std::string>{ownerName}] = temp_settings;
+			using namespace PresetHelpers::YAML_Helpers;
+            for (const auto& owner_id : CollectFrom<FormID,std::string>(ownerNode,"owners")) {
+				for (const auto& bench_id : CollectFrom<uint8_t>(ownerNode, "benches")) {
+
+                    RemnantsOwner remnants_owner(
+                        RemnantCatalyst(owner_id, static_cast<RemnantSettingsType>(ownerNode["type"].as<uint8_t>())),
+                        bench_id);
+
+                    // KWs
+				    std::vector<RE::BGSKeyword*> bench_keywords;
+					if (NodeExists(ownerNode, "bench_keywords")) {
+						for (const auto& bench_keyword : CollectFrom<FormID,std::string>(ownerNode,"bench_keywords")) {
+							if (auto a_kw = FormReader::GetFormByID<RE::BGSKeyword>(bench_keyword)) {
+							    bench_keywords.push_back(a_kw);
+							}
+						}
+					}
+					// Remnants
+				    Remnants remnants;
+                    for (auto a_remnants_node : ownerNode["remnants"]) {
+				        for (const auto a_formid : CollectFrom<FormID, std::string>(a_remnants_node, "FormEditorID")) {
+                            if (auto* remnant = FormReader::GetFormByID<RE::TESBoundObject>(a_formid)) {
+                                remnants[remnant] = a_remnants_node["count"].as<Count>();
+                            }
+                        }
                     }
-                } 
-                else {
-                    std::vector<std::string> owners;
-                    for (const auto& owner : _Node["owners"]) {
-                        owners.push_back(owner.as<std::string>());
-                    }
-                    auto temp_settings = _parsePreset(_Node);
-                    if (temp_settings.CheckIntegrity()) _custom_settings[owners] = temp_settings;
+
+				    std::unique_lock lock(presets_mutex_);
+                    presets[remnants_owner] = {bench_keywords,remnants};
                 }
             }
         }
     }
-    return _custom_settings;
 }
 
-const bool Preset::CheckIntegrity() { 
-    if (items.empty()) {
-		logger::error("Items are empty.");
-        return InitFailed();
+void PresetSettings::LoadSettings()
+{
+	LoadFormGroups();
+    LoadPresets();
+}
+
+bool RemnantsWithConditions::Conditions::Match(const RE::TESBoundObject* a_bench) const {
+	if (bench_keywords.empty()) return true; // No keyword means no condition
+	if (!a_bench) return false;
+	if (a_bench->HasKeywordInArray(bench_keywords,false)) return true; // Owner has the keyword
+    return false;
+}
+
+Remnants RemnantsWithConditions::Get(const RE::TESBoundObject* a_bench) {
+	return conditions.Match(a_bench) ? remnants : Remnants{};
+}
+
+void RemnantsWithConditions::Print() const {
+    logger::info("Bench Keywords:");
+    for (const auto& kw : conditions.bench_keywords) {
+        logger::info(" - {}", kw->GetName());
 	}
-    for (const auto& [formid_bench, count] : items) {
-        if (count == 0) {
-			logger::error("Count is 0.");
-            return InitFailed();
-		}
-        if (formid_bench.second == 0) {
-			logger::error("Bench is 0.");
-            return InitFailed();
-		}
-        const auto formid = formid_bench.first;
-        if (!Utilities::FunctionsSkyrim::GetFormByID(formid)) {
-			logger::error("Formid is null for {}", formid);
-            return InitFailed();
-		}
+    logger::info("Remnants:");
+    for (const auto& [remnant, count] : remnants) {
+        logger::info(" - {}: {}", remnant->GetName(), count);
 	}
-	return true;
 }

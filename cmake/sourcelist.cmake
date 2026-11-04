@@ -4,5 +4,4 @@ set(sources ${sources}
 	src/Utils.cpp
 	src/Settings.cpp
 	src/Manager.cpp
-	src/Hooks.cpp
 )

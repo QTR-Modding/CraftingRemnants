@@ -1,47 +1,26 @@
 #include "Manager.h"
 
-const Remnants Manager::_MakeSource(const FormID item, const Remnants& remnants) { 
-    if (sources.contains(item)){
-        logger::error("Manager::_MakeSource: item already exists in sources");
-    } else sources[item] = remnants;
-    return sources.at(item);
-}
-
-const bool Manager::IsBenchSupported(const std::uint8_t bench) const { 
-	return benches.contains(bench); 
-}
-
-const Remnants Manager::GetRemnants(const FormID used_item_formid) {
-    Remnants remnants = {};
-	const auto used_item = Utilities::FunctionsSkyrim::GetFormByID<RE::TESBoundObject>(used_item_formid);
-    if (!used_item) return remnants;
-
-    if (sources.contains(used_item_formid)) return sources.at(used_item_formid);
-
-	for (auto& [names, sttng] : presets) {
-        if (!sttng.IsHealthy()) continue;
-        logger::trace("GetRemnants: custom settings owner names {}", Utilities::Functions::String::join(names, ", "));
-        for (auto& name : names) {
-            const FormID temp_cstm_formid = Utilities::FunctionsSkyrim::GetFormEditorIDFromString(name);
-            if (temp_cstm_formid <= 0) continue;
-            if (const auto temp_cstm_form = Utilities::FunctionsSkyrim::GetFormByID(temp_cstm_formid, name)) {
-                if (temp_cstm_form->GetFormID() == used_item_formid) return _MakeSource(used_item_formid, sttng.items);
-            }
-        }
-        if (Utilities::Functions::String::includesWord(used_item->GetName(), names)) {
-            return _MakeSource(used_item_formid, sttng.items);
-        }
-    }
-    return remnants;
-}
-
-void Manager::Init() {
-	presets = parsePresets();
-    for (const auto& [ownerlist,preset] : presets) {
-		for (const auto& [formid_bench, count_bench] : preset.items) {
-            benches.insert(formid_bench.second);
-		}
+Remnants Manager::GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurniture* a_bench)
+{
+	std::shared_lock lock(PresetSettings::presets_mutex_);
+	if (const auto preset = PresetSettings::presets.find(a_owner); preset != PresetSettings::presets.end()) {
+		return preset->second.Get(a_bench);
 	}
-};
+	return Remnants{};
+}
 
-void Manager::UnInstall() {}
+void Manager::ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench, Count a_quantity)
+{
+    if (!a_bench) return;
+    const auto bench_type = a_bench->workBenchData.benchType.get();
+    if (bench_type == RE::TESFurniture::WorkBenchData::BenchType::kNone) return;
+    const auto remnants = GetRemnants({a_catalyst, static_cast<std::uint8_t>(bench_type)}, a_bench);
+    if (remnants.empty()) {
+        return;
+    }
+    const auto player = RE::PlayerCharacter::GetSingleton();
+	for (const auto& [remnant, count] : remnants) {
+        if (count == 0 || a_quantity == 0) continue;
+        player->AddObjectToContainer(remnant, nullptr, count * a_quantity, nullptr);
+	}
+}

@@ -1,27 +1,21 @@
+#pragma once
 #include "Settings.h"
 
 class Manager {
-
-    CustomPresets presets;
-    std::map<FormID, Remnants> sources;
-    std::set<std::uint8_t> benches;
-
-    const Remnants _MakeSource(const FormID item, const Remnants& remnants);
-
 public:
-    Manager() { Init(); };
+    static void ProcessRemnants(const RemnantCatalyst& a_catalyst, const RE::TESFurniture* a_bench, Count a_quantity = 1);
 
-    static Manager* GetSingleton() {
-        static Manager singleton;
-        return &singleton;
+#ifndef NDEBUG
+    static void Print() {
+        std::shared_lock lock(PresetSettings::presets_mutex_);
+	    logger::info("Current Remnants Presets:");
+	    for (const auto& [owner, remnant_conditions] : PresetSettings::presets) {
+		    logger::info("Owner: Catalyst: {:x}, settings type {},Bench ID: {}", owner.catalyst.first,
+                         owner.catalyst.second, owner.bench_id);
+		    remnant_conditions.Print();
+	    }
     }
-
-    const bool IsBenchSupported(const std::uint8_t bench) const;
-
-    const Remnants GetRemnants(const FormID item);
-
-    void Init();
-
-    void UnInstall();
-
+#endif
+private:
+    static Remnants GetRemnants(const RemnantsOwner& a_owner, const RE::TESFurniture* a_bench);
 };
